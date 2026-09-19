@@ -3,7 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Slip-Tis</title>
+
+<title>TIS Meet</title>
+
+<link rel="manifest" href="./manifest.json">
+
+<link rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="./icons/icon-512.png">
+
+<link rel="apple-touch-icon"
+      href="./icons/icon-512.png">
+
+<meta name="theme-color" content="#0d6efd">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TIS Meet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
 <style>
   body, html {
     margin: 0;
@@ -13,9 +31,10 @@
     font-family: sans-serif;
     overflow: hidden;
   }
+
   #loader {
     position: fixed;
-    inset: 0; /* shorthand top:0; left:0; right:0; bottom:0 */
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -24,10 +43,12 @@
     transition: opacity 1s ease;
     opacity: 1;
   }
+
   #loader.fadeout {
     opacity: 0;
     pointer-events: none;
   }
+
   .bar-loader {
     width: 120px;
     max-width: 60%;
@@ -37,6 +58,7 @@
     overflow: hidden;
     position: relative;
   }
+
   .bar-inner {
     width: 40px;
     height: 100%;
@@ -46,10 +68,17 @@
     left: -40px;
     animation: barmove 1.5s infinite linear;
   }
+
   @keyframes barmove {
-    0% { left: -40px;}
-    100% { left: 120px;}
+    0% {
+      left: -40px;
+    }
+
+    100% {
+      left: 120px;
+    }
   }
+
   #content-iframe {
     position: fixed;
     inset: 0;
@@ -60,58 +89,63 @@
     transition: opacity 0.8s cubic-bezier(.4,0,.2,1);
     z-index: 1;
   }
+
   #content-iframe.visible {
     opacity: 1;
   }
 </style>
 </head>
+
 <body>
+
 <div id="loader">
   <div class="bar-loader">
     <div class="bar-inner"></div>
   </div>
 </div>
-<iframe id="content-iframe"
-        src="https://script.google.com/macros/s/AKfycbxogYrC7Fkh4fMLf7Ecbaki6Jk5AHikJTrtZGlDHSV9ylff62BoSy6waHBAA1YHgsfg/exec">
+
+<iframe
+  id="content-iframe"
+  src="https://script.google.com/macros/s/AKfycbxogYrC7Fkh4fMLf7Ecbaki6Jk5AHikJTrtZGlDHSV9ylff62BoSy6waHBAA1YHgsfg/exec">
 </iframe>
+
 <script>
 const loader = document.getElementById('loader');
-  const iframe = document.getElementById('content-iframe');
+const iframe = document.getElementById('content-iframe');
+
+setTimeout(() => {
+  loader.classList.add('fadeout');
 
   setTimeout(() => {
-    loader.classList.add('fadeout');
-    setTimeout(() => {
-      loader.style.display = 'none';
-      iframe.classList.add('visible');
-    }, 1000);
-  }, 1500);
+    loader.style.display = 'none';
+    iframe.classList.add('visible');
+  }, 1000);
 
-  // ==============================
-  // 🔒 ป้องกันปุ่มย้อนกลับ (Mobile Back)
-  // ==============================
+}, 1500);
 
-  // push state ครั้งแรก
-  history.pushState(null, null, location.href);
 
-  window.addEventListener('popstate', function (event) {
-    const confirmExit = confirm('ต้องการออกจากหน้านี้หรือไม่ ?');
+/* ป้องกันปุ่มย้อนกลับ */
+history.pushState(null, null, location.href);
 
-    if (confirmExit) {
-      // อนุญาตให้ย้อนกลับจริง
-      history.back();
-    } else {
-      // กันไม่ให้ย้อนกลับ
-      history.pushState(null, null, location.href);
-    }
-  });
+window.addEventListener('popstate', function () {
 
-  // ==============================
-  // 🔒 กัน reload / ปิด tab (เสริม)
-  // ==============================
-  window.addEventListener('beforeunload', function (e) {
-    e.preventDefault();
-    e.returnValue = '';
-  });
+  const confirmExit = confirm('ต้องการออกจากหน้านี้หรือไม่ ?');
+
+  if (confirmExit) {
+    history.back();
+  } else {
+    history.pushState(null, null, location.href);
+  }
+
+});
+
+
+/* กัน reload / ปิด tab */
+window.addEventListener('beforeunload', function (e) {
+  e.preventDefault();
+  e.returnValue = '';
+});
 </script>
+
 </body>
 </html>

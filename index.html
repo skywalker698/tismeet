@@ -113,16 +113,23 @@
 const loader = document.getElementById('loader');
 const iframe = document.getElementById('content-iframe');
 
-setTimeout(() => {
+// setTimeout(() => {
+//   loader.classList.add('fadeout');
+
+//   setTimeout(() => {
+//     loader.style.display = 'none';
+//     iframe.classList.add('visible');
+//   }, 1000);
+
+// }, 1500);
+iframe.addEventListener('load', function () {
   loader.classList.add('fadeout');
 
   setTimeout(() => {
     loader.style.display = 'none';
     iframe.classList.add('visible');
   }, 1000);
-
-}, 1500);
-
+});
 
 /* ป้องกันปุ่มย้อนกลับ */
 history.pushState(null, null, location.href);

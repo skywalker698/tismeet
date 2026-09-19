@@ -1,1 +1,19 @@
-
+{
+  "name": "TIS Meet",
+  "short_name": "TIS Meet",
+  "description": "ระบบจองห้องประชุมบริษัทน้ำตาลไทยเอกลักษณ์ จำกัด",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "icons": [
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

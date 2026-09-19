@@ -15,6 +15,7 @@
       href="./icon-512.png">
 
 <meta name="theme-color" content="#ffffff">
+
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TIS Meet">
@@ -153,12 +154,23 @@ body {
   cursor: pointer;
 }
 
-#iosInfo {
+#iosGuide {
   display: none;
-  margin-top: 12px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: #666666;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #555555;
+  margin-bottom: 10px;
+}
+
+#iosGuide b {
+  color: #222222;
+}
+
+#iosShare {
+  display: inline-block;
+  font-size: 22px;
+  vertical-align: middle;
+  margin: 0 4px;
 }
 </style>
 
@@ -186,14 +198,24 @@ body {
     เพื่อเปิดใช้งานได้สะดวกเหมือน Application
   </p>
 
+  <div id="iosGuide">
+
+```
+สำหรับ iPhone / iPad<br>
+
+กดปุ่ม
+<span id="iosShare">□</span>
+<b>แชร์</b>
+แล้วเลือก<br>
+
+<b>เพิ่มไปยังหน้าจอโฮม</b>
+```
+
+  </div>
+
   <button id="installBtn">
     ติดตั้งเป็น App
   </button>
-
-  <div id="iosInfo">
-    กดปุ่ม <b>แชร์</b> ของ Safari<br>
-    แล้วเลือก <b>เพิ่มไปยังหน้าจอโฮม</b>
-  </div>
 
   <button id="closeInstall">
     ใช้งานผ่านเว็บไซต์
@@ -214,12 +236,12 @@ const iframe = document.getElementById('content-iframe');
 const installBox = document.getElementById('installBox');
 const installBtn = document.getElementById('installBtn');
 const closeInstall = document.getElementById('closeInstall');
-const iosInfo = document.getElementById('iosInfo');
+const iosGuide = document.getElementById('iosGuide');
 
 let deferredPrompt = null;
 
 
-/* ตรวจสอบว่าเปิดจาก App ที่ติดตั้งแล้ว */
+/* ตรวจสอบว่าเปิดเป็น App แล้วหรือไม่ */
 
 function isInstalledApp() {
 
@@ -229,7 +251,27 @@ function isInstalledApp() {
 }
 
 
-/* Android / Chrome */
+/* ตรวจสอบ iPhone / iPad */
+
+function isIOS() {
+
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+}
+
+
+/* ตรวจสอบ Safari */
+
+function isSafari() {
+
+  return /^((?!chrome|android|crios|fxios|edgios).)*safari/i
+    .test(navigator.userAgent);
+
+}
+
+
+/* Android / Browser ที่รองรับ beforeinstallprompt */
 
 window.addEventListener('beforeinstallprompt', function(e) {
 
@@ -240,60 +282,60 @@ window.addEventListener('beforeinstallprompt', function(e) {
 });
 
 
-/* แสดงคำแนะนำติดตั้งเมื่อเปิดจากเว็บไซต์ */
+/* แสดงหน้าคำแนะนำ */
 
 window.addEventListener('load', function() {
 
   if (isInstalledApp()) {
+
     installBox.style.display = 'none';
+
     return;
+
   }
 
-  const isIOS =
-    /iphone|ipad|ipod/i.test(navigator.userAgent);
-
-  const isSafari =
-    /safari/i.test(navigator.userAgent) &&
-    !/crios|fxios|edgios/i.test(navigator.userAgent);
-
-  if (isIOS && isSafari) {
+  if (isIOS()) {
 
     installBox.style.display = 'block';
 
     installBtn.style.display = 'none';
 
-    iosInfo.style.display = 'block';
-
-  } else {
-
-    installBox.style.display = 'block';
-
-  }
-
-});
-
-
-/* ปุ่มติดตั้ง */
-
-installBtn.addEventListener('click', async function() {
-
-  if (deferredPrompt) {
-
-    deferredPrompt.prompt();
-
-    const result = await deferredPrompt.userChoice;
-
-    deferredPrompt = null;
-
-    installBox.style.display = 'none';
+    iosGuide.style.display = 'block';
 
     return;
 
   }
 
-  alert(
-    'หากปุ่มติดตั้งยังไม่แสดง ให้เปิดเมนูของเบราว์เซอร์ แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มไปยังหน้าจอหลัก"'
-  );
+  installBox.style.display = 'block';
+
+});
+
+
+/* Android */
+
+installBtn.addEventListener('click', async function() {
+
+  if (!deferredPrompt) {
+
+    alert(
+      'เปิดเมนูของเบราว์เซอร์ แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มไปยังหน้าจอหลัก"'
+    );
+
+    return;
+
+  }
+
+  deferredPrompt.prompt();
+
+  const result = await deferredPrompt.userChoice;
+
+  if (result.outcome === 'accepted') {
+
+    installBox.style.display = 'none';
+
+  }
+
+  deferredPrompt = null;
 
 });
 
@@ -307,7 +349,7 @@ closeInstall.addEventListener('click', function() {
 });
 
 
-/* เมื่อติดตั้งสำเร็จ */
+/* ตรวจพบการติดตั้ง */
 
 window.addEventListener('appinstalled', function() {
 
@@ -316,7 +358,7 @@ window.addEventListener('appinstalled', function() {
 });
 
 
-/* เมื่อ iframe โหลดเสร็จ */
+/* iframe โหลดเสร็จ */
 
 iframe.addEventListener('load', function() {
 

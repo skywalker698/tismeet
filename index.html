@@ -32,6 +32,10 @@ body {
   overflow: hidden;
 }
 
+/* =========================
+   LOADING
+   ========================= */
+
 #loader {
   position: fixed;
   inset: 0;
@@ -41,6 +45,7 @@ body {
   background: #ffffff;
   z-index: 9999;
   opacity: 1;
+  visibility: visible;
   transition: opacity 0.8s ease;
 }
 
@@ -79,6 +84,10 @@ body {
   }
 }
 
+/* =========================
+   WEB APP
+   ========================= */
+
 #content-iframe {
   position: fixed;
   inset: 0;
@@ -86,13 +95,19 @@ body {
   height: 100%;
   border: none;
   opacity: 0;
+  visibility: hidden;
   transition: opacity 0.6s ease;
   z-index: 1;
 }
 
 #content-iframe.visible {
   opacity: 1;
+  visibility: visible;
 }
+
+/* =========================
+   INSTALL BOX
+   ========================= */
 
 #installBox {
   position: fixed;
@@ -178,11 +193,19 @@ body {
 
 <body>
 
+<!-- =========================
+     LOADING
+     ========================= -->
+
 <div id="loader">
   <div class="bar-loader">
     <div class="bar-inner"></div>
   </div>
 </div>
+
+<!-- =========================
+     INSTALL GUIDE
+     ========================= -->
 
 <div id="installBox">
 
@@ -223,12 +246,20 @@ body {
 
 </div>
 
+<!-- =========================
+     GOOGLE APPS SCRIPT WEB APP
+     ========================= -->
+
 <iframe
   id="content-iframe"
   src="https://script.google.com/macros/s/AKfycbxogYrC7Fkh4fMLf7Ecbaki6Jk5AHikJTrtZGlDHSV9ylff62BoSy6waHBAA1YHgsfg/exec">
 </iframe>
 
 <script>
+
+/* =========================
+   ELEMENTS
+   ========================= */
 
 const loader = document.getElementById('loader');
 const iframe = document.getElementById('content-iframe');
@@ -241,7 +272,9 @@ const iosGuide = document.getElementById('iosGuide');
 let deferredPrompt = null;
 
 
-/* ตรวจสอบว่าเปิดเป็น App แล้วหรือไม่ */
+/* =========================
+   ตรวจสอบว่าเปิดเป็น App แล้วหรือไม่
+   ========================= */
 
 function isInstalledApp() {
 
@@ -251,27 +284,22 @@ function isInstalledApp() {
 }
 
 
-/* ตรวจสอบ iPhone / iPad */
+/* =========================
+   ตรวจสอบ iPhone / iPad
+   ========================= */
 
 function isIOS() {
 
   return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+         (navigator.platform === 'MacIntel' &&
+          navigator.maxTouchPoints > 1);
 
 }
 
 
-/* ตรวจสอบ Safari */
-
-function isSafari() {
-
-  return /^((?!chrome|android|crios|fxios|edgios).)*safari/i
-    .test(navigator.userAgent);
-
-}
-
-
-/* Android / Browser ที่รองรับ beforeinstallprompt */
+/* =========================
+   Android / Browser
+   ========================= */
 
 window.addEventListener('beforeinstallprompt', function(e) {
 
@@ -282,7 +310,9 @@ window.addEventListener('beforeinstallprompt', function(e) {
 });
 
 
-/* แสดงหน้าคำแนะนำ */
+/* =========================
+   แสดงคำแนะนำติดตั้ง
+   ========================= */
 
 window.addEventListener('load', function() {
 
@@ -311,7 +341,9 @@ window.addEventListener('load', function() {
 });
 
 
-/* Android */
+/* =========================
+   Android Install
+   ========================= */
 
 installBtn.addEventListener('click', async function() {
 
@@ -340,7 +372,9 @@ installBtn.addEventListener('click', async function() {
 });
 
 
-/* ปิดคำแนะนำ */
+/* =========================
+   ปิดคำแนะนำ
+   ========================= */
 
 closeInstall.addEventListener('click', function() {
 
@@ -349,7 +383,9 @@ closeInstall.addEventListener('click', function() {
 });
 
 
-/* ตรวจพบการติดตั้ง */
+/* =========================
+   ตรวจพบการติดตั้ง
+   ========================= */
 
 window.addEventListener('appinstalled', function() {
 
@@ -358,29 +394,35 @@ window.addEventListener('appinstalled', function() {
 });
 
 
-/* iframe โหลดเสร็จ */
+/* =========================
+   iframe โหลดเสร็จ
+   ========================= */
 
 iframe.addEventListener('load', function() {
 
   loader.classList.add('fadeout');
 
+  iframe.classList.add('visible');
+
   setTimeout(function() {
 
     loader.style.display = 'none';
-    iframe.classList.add('visible');
 
   }, 800);
 
 });
 
 
-/* ป้องกันปุ่มย้อนกลับ */
+/* =========================
+   ป้องกันปุ่มย้อนกลับ
+   ========================= */
 
 history.pushState(null, null, location.href);
 
 window.addEventListener('popstate', function() {
 
-  const confirmExit = confirm('ต้องการออกจากหน้านี้หรือไม่ ?');
+  const confirmExit =
+    confirm('ต้องการออกจากหน้านี้หรือไม่ ?');
 
   if (confirmExit) {
 

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -14,7 +15,6 @@
       href="./icon-512.png">
 
 <meta name="theme-color" content="#ffffff">
-
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TIS Meet">
@@ -96,30 +96,38 @@ body {
 #installBox {
   position: fixed;
   left: 50%;
-  bottom: 25px;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: calc(100% - 40px);
-  max-width: 420px;
+  max-width: 400px;
   box-sizing: border-box;
   background: #ffffff;
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.18);
+  border-radius: 18px;
+  padding: 24px 20px 20px;
+  box-shadow: 0 8px 35px rgba(0,0,0,0.20);
   z-index: 10000;
-  display: none;
   text-align: center;
+  display: none;
+}
+
+#installIcon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  object-fit: cover;
+  margin-bottom: 12px;
 }
 
 #installBox h3 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
+  margin: 0 0 8px;
+  font-size: 20px;
   color: #222222;
 }
 
 #installBox p {
-  margin: 0 0 15px 0;
+  margin: 0 0 18px;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #666666;
 }
 
@@ -127,7 +135,7 @@ body {
   width: 100%;
   border: none;
   border-radius: 10px;
-  padding: 12px;
+  padding: 13px;
   background: #0d6efd;
   color: #ffffff;
   font-size: 16px;
@@ -135,22 +143,25 @@ body {
 }
 
 #closeInstall {
-  margin-top: 10px;
+  width: 100%;
+  margin-top: 9px;
   border: none;
   background: transparent;
   color: #777777;
   font-size: 14px;
+  padding: 8px;
   cursor: pointer;
 }
 
 #iosInfo {
   display: none;
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #666666;
 }
 </style>
+
 </head>
 
 <body>
@@ -163,11 +174,16 @@ body {
 
 <div id="installBox">
 
+<img
+ id="installIcon"
+ src="./icon-512.png"
+ alt="TIS Meet">
+
   <h3>ติดตั้ง TIS Meet</h3>
 
   <p>
-    สามารถติดตั้งระบบไว้ที่หน้าจอมือถือ
-    เพื่อเปิดใช้งานได้เหมือน Application
+    ติดตั้งระบบไว้ที่หน้าจอมือถือ
+    เพื่อเปิดใช้งานได้สะดวกเหมือน Application
   </p>
 
   <button id="installBtn">
@@ -175,13 +191,12 @@ body {
   </button>
 
   <div id="iosInfo">
-    สำหรับ iPhone/iPad<br>
-    กดปุ่ม <b>แชร์</b> แล้วเลือก<br>
-    <b>เพิ่มไปยังหน้าจอโฮม</b>
+    กดปุ่ม <b>แชร์</b> ของ Safari<br>
+    แล้วเลือก <b>เพิ่มไปยังหน้าจอโฮม</b>
   </div>
 
   <button id="closeInstall">
-    ปิด
+    ใช้งานผ่านเว็บไซต์
   </button>
 
 </div>
@@ -204,7 +219,7 @@ const iosInfo = document.getElementById('iosInfo');
 let deferredPrompt = null;
 
 
-/* ตรวจสอบว่าเปิดจาก App ที่ติดตั้งแล้วหรือไม่ */
+/* ตรวจสอบว่าเปิดจาก App ที่ติดตั้งแล้ว */
 
 function isInstalledApp() {
 
@@ -222,8 +237,37 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
   deferredPrompt = e;
 
-  if (!isInstalledApp()) {
+});
+
+
+/* แสดงคำแนะนำติดตั้งเมื่อเปิดจากเว็บไซต์ */
+
+window.addEventListener('load', function() {
+
+  if (isInstalledApp()) {
+    installBox.style.display = 'none';
+    return;
+  }
+
+  const isIOS =
+    /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  const isSafari =
+    /safari/i.test(navigator.userAgent) &&
+    !/crios|fxios|edgios/i.test(navigator.userAgent);
+
+  if (isIOS && isSafari) {
+
     installBox.style.display = 'block';
+
+    installBtn.style.display = 'none';
+
+    iosInfo.style.display = 'block';
+
+  } else {
+
+    installBox.style.display = 'block';
+
   }
 
 });
@@ -233,22 +277,28 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
 installBtn.addEventListener('click', async function() {
 
-  if (!deferredPrompt) {
+  if (deferredPrompt) {
+
+    deferredPrompt.prompt();
+
+    const result = await deferredPrompt.userChoice;
+
+    deferredPrompt = null;
+
+    installBox.style.display = 'none';
+
     return;
+
   }
 
-  deferredPrompt.prompt();
-
-  const result = await deferredPrompt.userChoice;
-
-  deferredPrompt = null;
-
-  installBox.style.display = 'none';
+  alert(
+    'หากปุ่มติดตั้งยังไม่แสดง ให้เปิดเมนูของเบราว์เซอร์ แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มไปยังหน้าจอหลัก"'
+  );
 
 });
 
 
-/* ปิดคำแนะนำติดตั้ง */
+/* ปิดคำแนะนำ */
 
 closeInstall.addEventListener('click', function() {
 
@@ -257,36 +307,16 @@ closeInstall.addEventListener('click', function() {
 });
 
 
-/* iPhone / iPad */
+/* เมื่อติดตั้งสำเร็จ */
 
-const isIOS =
-  /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-
-const isSafari =
-  /safari/i.test(window.navigator.userAgent) &&
-  !/crios|fxios|edgios/i.test(window.navigator.userAgent);
-
-if (isIOS && isSafari && !isInstalledApp()) {
-
-  installBox.style.display = 'block';
-
-  installBtn.style.display = 'none';
-
-  iosInfo.style.display = 'block';
-
-}
-
-
-/* เมื่อเปิดเป็น App แล้ว ไม่ต้องแสดงคำแนะนำติดตั้ง */
-
-if (isInstalledApp()) {
+window.addEventListener('appinstalled', function() {
 
   installBox.style.display = 'none';
 
-}
+});
 
 
-/* แสดงระบบเมื่อ iframe โหลดเสร็จ */
+/* เมื่อ iframe โหลดเสร็จ */
 
 iframe.addEventListener('load', function() {
 
@@ -326,11 +356,6 @@ window.addEventListener('popstate', function() {
   }
 
 });
-
-
-/* ไม่บล็อก beforeunload
-   เพื่อไม่ให้มือถือแสดงข้อความเตือน
-   ตอนปิด App / เปลี่ยนหน้า */
 
 </script>
 

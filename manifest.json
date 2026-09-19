@@ -1,5 +1,5 @@
 {
-  "name": "App จองใช้ห้องประชุมไทยเอกลักษณ์ ",
+  "name": "TIS Meet",
   "short_name": "TIS Meet",
   "description": "ระบบจองห้องประชุมบริษัทน้ำตาลไทยเอกลักษณ์ จำกัด",
   "start_url": "./",
@@ -7,13 +7,13 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "##ffffff",
+  "theme_color": "#ffffff",
 "icons": [
   {
     "src": "./icon-512.png",
     "sizes": "512x512",
     "type": "image/png",
-    "purpose": "any maskable"
+    "purpose": "any"
   }
 ]
 }

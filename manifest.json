@@ -1,19 +1,19 @@
 {
-  "name": "ระบบจองใช้ห้องประชุมไทยเอกลักษณ์",
-  "short_name": "TIS Meet",
-  "description": "ระบบจองใช้ห้องประชุมไทยเอกลักษณ์ แจ้งผ่านไลน์",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
-  "icons": [
-    {
-      "src": "./icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
-  ]
+"name": "ระบบจองใช้ห้องประชุมไทยเอกลักษณ์",
+"short_name": "TIS Meet",
+"description": "ระบบจองใช้ห้องประชุมไทยเอกลักษณ์ แจ้งผ่านไลน์",
+"start_url": "./",
+"scope": "./",
+"display": "standalone",
+"orientation": "portrait",
+"background_color": "#ffffff",
+"theme_color": "#ffffff",
+"icons": [
+{
+"src": "./icon-512.png",
+"sizes": "512x512",
+"type": "image/png",
+"purpose": "any"
+}
+]
 }

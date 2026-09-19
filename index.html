@@ -2,150 +2,665 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1,
+               maximum-scale=1,
+               viewport-fit=cover">
 <title>ระบบจองใช้ห้องประชุมไทยเอกลักษณ์ แจ้งผ่านไลน์</title>
-
+<!-- =========================================================
+     PWA MANIFEST
+     ========================================================= -->
 <link rel="manifest" href="./manifest.json">
-
+<!-- =========================================================
+     ICON
+     ========================================================= -->
+<link rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="./icon-192.png">
 <link rel="icon"
       type="image/png"
       sizes="512x512"
       href="./icon-512.png">
-
 <link rel="apple-touch-icon"
-      href="./icon-512.png">
-
-<meta name="theme-color" content="#0d6efd">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="TIS Meet">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
+      href="./icon-192.png">
+<!-- =========================================================
+     MOBILE / PWA
+     ========================================================= -->
+<meta name="theme-color"
+      content="#0d6efd">
+<meta name="mobile-web-app-capable"
+      content="yes">
+<meta name="apple-mobile-web-app-capable"
+      content="yes">
+<meta name="apple-mobile-web-app-title"
+      content="TIS Meet">
+<meta name="apple-mobile-web-app-status-bar-style"
+      content="default">
 <style>
-  body, html {
+/* =========================================================
+   RESET
+   ========================================================= */
+html,
+body {
     margin: 0;
-    height: 100%;
+    padding: 0;
     width: 100%;
-    background: #f0f0f0;
-    font-family: sans-serif;
+    height: 100%;
     overflow: hidden;
-  }
-
-  #loader {
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+    background: #f5f7fa;
+}
+/* =========================================================
+   LOADING PAGE
+   ========================================================= */
+#loader {
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
-    z-index: 999;
-    transition: opacity 1s ease;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f4f8ff 100%
+        );
+    z-index: 9999;
     opacity: 1;
-  }
-
-  #loader.fadeout {
+    visibility: visible;
+    transition:
+        opacity .45s ease,
+        visibility .45s ease;
+}
+#loader.hide {
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-  }
-
-  .bar-loader {
-    width: 120px;
-    max-width: 60%;
-    height: 14px;
-    background: #ececec;
-    border-radius: 7px;
+}
+/* =========================================================
+   LOADING CONTENT
+   ========================================================= */
+.loader-content {
+    width: 90%;
+    max-width: 360px;
+    text-align: center;
+}
+/* =========================================================
+   APP ICON
+   ========================================================= */
+.loader-icon {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+    border-radius: 24px;
+    margin-bottom: 18px;
+    box-shadow:
+        0 8px 25px rgba(13,110,253,.18);
+}
+/* =========================================================
+   APP NAME
+   ========================================================= */
+.loader-title {
+    font-size: 25px;
+    font-weight: 700;
+    color: #17365d;
+    margin-bottom: 7px;
+}
+.loader-subtitle {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 25px;
+}
+/* =========================================================
+   LOADING BAR
+   ========================================================= */
+.loading-bar {
+    width: 190px;
+    height: 5px;
+    margin: auto;
+    background: #e9ecef;
+    border-radius: 10px;
     overflow: hidden;
-    position: relative;
-  }
-
-  .bar-inner {
-    width: 40px;
+}
+.loading-bar-inner {
+    width: 45%;
     height: 100%;
-    background: #4285f4;
-    border-radius: 7px;
-    position: absolute;
-    left: -40px;
-    animation: barmove 1.5s infinite linear;
-  }
-
-  @keyframes barmove {
+    background:
+        linear-gradient(
+            90deg,
+            #0d6efd,
+            #4dabf7
+        );
+    border-radius: 10px;
+    animation:
+        loadingMove 1.2s
+        infinite ease-in-out;
+}
+@keyframes loadingMove {
     0% {
-      left: -40px;
+        transform:
+            translateX(-120%);
     }
-
     100% {
-      left: 120px;
+        transform:
+            translateX(330%);
     }
-  }
-
-  #content-iframe {
+}
+/* =========================================================
+   INSTALL OVERLAY
+   ========================================================= */
+#installOverlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background:
+        rgba(0,0,0,.48);
+    z-index: 10000;
+    padding: 20px;
+}
+/* =========================================================
+   INSTALL BOX
+   ========================================================= */
+.install-box {
+    width: 100%;
+    max-width: 390px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 28px 24px 22px;
+    text-align: center;
+    box-shadow:
+        0 18px 60px
+        rgba(0,0,0,.25);
+    animation:
+        installAppear
+        .35s ease-out;
+}
+@keyframes installAppear {
+    from {
+        opacity: 0;
+        transform:
+            translateY(25px)
+            scale(.96);
+    }
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+/* =========================================================
+   INSTALL ICON
+   ========================================================= */
+.install-icon {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    border-radius: 20px;
+    margin-bottom: 14px;
+}
+/* =========================================================
+   INSTALL TITLE
+   ========================================================= */
+.install-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #17365d;
+    margin-bottom: 8px;
+}
+.install-description {
+    font-size: 15px;
+    line-height: 1.55;
+    color: #6c757d;
+    margin-bottom: 22px;
+}
+/* =========================================================
+   BUTTON AREA
+   ========================================================= */
+.install-buttons {
+    display: flex;
+    gap: 10px;
+}
+/* =========================================================
+   BUTTON
+   ========================================================= */
+.install-button,
+.cancel-button {
+    flex: 1;
+    min-height: 48px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+/* INSTALL */
+.install-button {
+    color: white;
+    background:
+        linear-gradient(
+            135deg,
+            #0d6efd,
+            #0866d8
+        );
+    box-shadow:
+        0 5px 14px
+        rgba(13,110,253,.25);
+}
+/* CANCEL */
+.cancel-button {
+    color: #495057;
+    background: #eef1f5;
+}
+/* =========================================================
+   IOS GUIDE
+   ========================================================= */
+#iosGuide {
+    display: none;
+}
+.ios-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #555;
+    margin-top: 10px;
+}
+.ios-share {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: #eef4ff;
+    color: #0d6efd;
+    font-weight: 600;
+}
+/* =========================================================
+   IFRAME
+   ========================================================= */
+#content-iframe {
     position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
     border: none;
     opacity: 0;
-    transition: opacity 0.8s cubic-bezier(.4,0,.2,1);
+    background: white;
     z-index: 1;
-  }
-
-  #content-iframe.visible {
+    transition:
+        opacity .45s
+        cubic-bezier(.4,0,.2,1);
+}
+#content-iframe.visible {
     opacity: 1;
-  }
+}
+/* =========================================================
+   HIDE INSTALL UI WHEN APP IS ALREADY INSTALLED
+   ========================================================= */
+@media (display-mode: standalone) {
+    #installOverlay {
+        display: none !important;
+    }
+}
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+@media (max-width: 360px) {
+    .loader-icon {
+        width: 90px;
+        height: 90px;
+    }
+    .loader-title {
+        font-size: 22px;
+    }
+    .install-box {
+        padding:
+            24px 18px 18px;
+    }
+}
 </style>
 </head>
-
 <body>
-
+<!-- =========================================================
+     LOADING SCREEN
+     ========================================================= -->
 <div id="loader">
-  <div class="bar-loader">
-    <div class="bar-inner"></div>
-  </div>
+    <div class="loader-content">
+        <img
+            class="loader-icon"
+            src="./icon-512.png"
+            alt="TIS Meet">
+        <div class="loader-title">
+            TIS Meet
+        </div>
+        <div class="loader-subtitle">
+            ระบบจองใช้ห้องประชุมไทยเอกลักษณ์
+        </div>
+        <div class="loading-bar">
+            <div class="loading-bar-inner"></div>
+        </div>
+    </div>
 </div>
-
+<!-- =========================================================
+     INSTALL APP DIALOG
+     ========================================================= -->
+<div id="installOverlay">
+    <div class="install-box">
+        <img
+            class="install-icon"
+            src="./icon-512.png"
+            alt="TIS Meet">
+        <div class="install-title">
+            ติดตั้ง TIS Meet
+        </div>
+        <div
+            id="installDescription"
+            class="install-description">
+            ติดตั้งเป็น Application
+            เพื่อเข้าใช้งานระบบได้รวดเร็ว
+            และสะดวกยิ่งขึ้น
+        </div>
+        <!-- =================================================
+             IOS GUIDE
+             ================================================= -->
+        <div id="iosGuide">
+            <div class="ios-text">
+                แตะปุ่ม
+                <span class="ios-share">แชร์</span>
+                ของ Safari
+                <br>
+                แล้วเลือก
+                <strong>
+                    "เพิ่มไปยังหน้าจอโฮม"
+                </strong>
+            </div>
+        </div>
+        <!-- =================================================
+             BUTTONS
+             ================================================= -->
+        <div class="install-buttons">
+            <button
+                id="installBtn"
+                class="install-button">
+                Install
+            </button>
+            <button
+                id="cancelBtn"
+                class="cancel-button">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+<!-- =========================================================
+     GOOGLE WEB APP
+     ========================================================= -->
 <iframe
-  id="content-iframe"
-  src="https://script.google.com/macros/s/AKfycbxogYrC7Fkh4fMLf7Ecbaki6Jk5AHikJTrtZGlDHSV9ylff62BoSy6waHBAA1YHgsfg/exec">
+    id="content-iframe"
+    src="https://script.google.com/macros/s/AKfycbxogYrC7Fkh4fMLf7Ecbaki6Jk5AHikJTrtZGlDHSV9ylff62BoSy6waHBAA1YHgsfg/exec"
+    allow="clipboard-read; clipboard-write"
+    loading="eager">
 </iframe>
-
 <script>
-const loader = document.getElementById('loader');
-const iframe = document.getElementById('content-iframe');
-
-setTimeout(() => {
-  loader.classList.add('fadeout');
-
-  setTimeout(() => {
-    loader.style.display = 'none';
-    iframe.classList.add('visible');
-  }, 1000);
-
-}, 1500);
-
-
-/* ป้องกันปุ่มย้อนกลับ */
-history.pushState(null, null, location.href);
-
-window.addEventListener('popstate', function () {
-
-  const confirmExit = confirm('ต้องการออกจากหน้านี้หรือไม่ ?');
-
-  if (confirmExit) {
-    history.back();
-  } else {
-    history.pushState(null, null, location.href);
-  }
-
-});
-
-
-/* กัน reload / ปิด tab */
-window.addEventListener('beforeunload', function (e) {
-  e.preventDefault();
-  e.returnValue = '';
-});
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
+const loader =
+    document.getElementById("loader");
+const iframe =
+    document.getElementById("content-iframe");
+const installOverlay =
+    document.getElementById("installOverlay");
+const installBtn =
+    document.getElementById("installBtn");
+const cancelBtn =
+    document.getElementById("cancelBtn");
+const installDescription =
+    document.getElementById("installDescription");
+const iosGuide =
+    document.getElementById("iosGuide");
+/* =========================================================
+   PWA INSTALL STATE
+   ========================================================= */
+let deferredPrompt = null;
+/* =========================================================
+   CHECK STANDALONE
+   ========================================================= */
+function isStandalone() {
+    return (
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches
+        ||
+        window.navigator.standalone === true
+    );
+}
+/* =========================================================
+   DETECT IOS
+   ========================================================= */
+function isIOS() {
+    return /iphone|ipad|ipod/i.test(
+        navigator.userAgent
+    );
+}
+/* =========================================================
+   SHOW INSTALL DIALOG
+   ========================================================= */
+function showInstallDialog() {
+    if (isStandalone()) {
+        return;
+    }
+    installOverlay.style.display =
+        "flex";
+}
+/* =========================================================
+   HIDE INSTALL DIALOG
+   ========================================================= */
+function hideInstallDialog() {
+    installOverlay.style.display =
+        "none";
+}
+/* =========================================================
+   BEFORE INSTALL PROMPT
+   ========================================================= */
+window.addEventListener(
+    "beforeinstallprompt",
+    function(event) {
+        console.log(
+            "PWA install available"
+        );
+        event.preventDefault();
+        deferredPrompt = event;
+        /*
+         * แสดงกล่อง Install / Cancel
+         * เมื่อ Browser ตรวจพบว่า
+         * WebApp สามารถติดตั้งได้
+         */
+        setTimeout(
+            showInstallDialog,
+300
+        );
+    }
+);
+/* =========================================================
+   INSTALL BUTTON
+   ========================================================= */
+installBtn.addEventListener(
+    "click",
+    async function() {
+        /*
+         * Android / Chrome / Edge
+         */
+        if (deferredPrompt) {
+            const promptEvent =
+                deferredPrompt;
+            deferredPrompt = null;
+            try {
+                await promptEvent.prompt();
+                const result =
+                    await promptEvent.userChoice;
+                console.log(
+                    "Install result:",
+                    result.outcome
+                );
+            }
+            catch (error) {
+                console.error(
+                    "Install error:",
+                    error
+                );
+            }
+            hideInstallDialog();
+            return;
+        }
+        /*
+         * iPhone / iPad
+         */
+        if (isIOS()) {
+            iosGuide.style.display =
+                "block";
+            installDescription.innerHTML =
+                "ติดตั้ง TIS Meet ลงบนหน้าจอเครื่องได้ง่าย ๆ";
+            return;
+        }
+        /*
+         * Browser ไม่รองรับ
+         */
+        hideInstallDialog();
+    }
+);
+/* =========================================================
+   CANCEL BUTTON
+   ========================================================= */
+cancelBtn.addEventListener(
+    "click",
+    function() {
+        hideInstallDialog();
+    }
+);
+/* =========================================================
+   APP INSTALLED
+   ========================================================= */
+window.addEventListener(
+    "appinstalled",
+    function() {
+        console.log(
+            "TIS Meet installed"
+        );
+        deferredPrompt = null;
+        hideInstallDialog();
+    }
+);
+/* =========================================================
+   LOADING
+   ========================================================= */
+function finishLoading() {
+    setTimeout(
+        function() {
+            loader.classList.add(
+                "hide"
+            );
+            setTimeout(
+                function() {
+                    loader.style.display =
+                        "none";
+                    iframe.classList.add(
+                        "visible"
+                    );
+                },
+450
+            );
+        },
+900
+    );
+}
+/* =========================================================
+   START
+   ========================================================= */
+window.addEventListener(
+    "load",
+    function() {
+        finishLoading();
+    }
+);
+/* =========================================================
+   PREVENT BACK
+   ========================================================= */
+history.pushState(
+    null,
+    null,
+    location.href
+);
+window.addEventListener(
+    "popstate",
+    function() {
+        const confirmExit =
+            confirm(
+                "ต้องการออกจากหน้านี้หรือไม่ ?"
+            );
+        if (confirmExit) {
+            history.back();
+        }
+        else {
+            history.pushState(
+                null,
+                null,
+                location.href
+            );
+        }
+    }
+);
+/* =========================================================
+   REGISTER SERVICE WORKER
+   ========================================================= */
+if ("serviceWorker" in navigator) {
+    window.addEventListener(
+        "load",
+        function() {
+            navigator.serviceWorker
+                .register("./sw.js")
+                .then(
+                    function(registration) {
+                        console.log(
+                            "Service Worker registered:",
+                            registration.scope
+                        );
+                    }
+                )
+                .catch(
+                    function(error) {
+                        console.error(
+                            "Service Worker error:",
+                            error
+                        );
+                    }
+                );
+        }
+    );
+}
+/* =========================================================
+   DEBUG
+   ========================================================= */
+console.log(
+    "TIS Meet PWA loaded"
+);
+console.log(
+    "Standalone:",
+    isStandalone()
+);
 </script>
-
 </body>
 </html>

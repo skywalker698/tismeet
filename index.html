@@ -362,19 +362,14 @@ window.addEventListener('appinstalled', function() {
 
 iframe.addEventListener('load', function() {
 
+  loader.classList.add('fadeout');
+
   setTimeout(function() {
 
-    loader.classList.add('fadeout');
+    loader.style.display = 'none';
+    iframe.classList.add('visible');
 
-    setTimeout(function() {
-
-      loader.style.display = 'none';
-
-      iframe.classList.add('visible');
-
-    }, 800);
-
-  }, 300);
+  }, 800);
 
 });
 

@@ -11,8 +11,8 @@
 
 <link rel="icon"
       type="image/png"
-      sizes="512x512"
-      href="./icon-512.png">
+      sizes="192x192"
+      href="./icon-192.png">
 
 <meta name="theme-color" content="#ffffff">
 
@@ -46,12 +46,13 @@ body {
   z-index: 9999;
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.8s ease;
 }
 
 #loader.fadeout {
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.8s ease;
 }
 
 .bar-loader {

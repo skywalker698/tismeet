@@ -1,441 +1,453 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบจองใช้ห้องประชุมไทยเอกลักษณ์ แจ้งเตือนไลน์</title>
 
-<title>ระบบจองใช้ห้องประชุมไทยเอกลักษณ์ แจ้งผ่านไลน์</title>
-
-<link rel="manifest" href="./manifest.json">
-
-<link rel="icon"
-      type="image/png"
-      sizes="192x192"
-      href="./icon-192.png">
-
-<meta name="theme-color" content="#ffffff">
-
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f766e">
+<meta name="application-name" content="จองห้องประชุม">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="TIS Meet">
+<meta name="apple-mobile-web-app-title" content="จองห้อง">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <style>
-html,
-body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  background: #ffffff;
-  font-family: sans-serif;
-  overflow: hidden;
-}
+  :root {
+    --brand: #0f766e;
+    --bg: #ffffff;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #ffffff; /* loader คงพื้นขาวเหมือนเดิม */
+      --card: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --border: #374151;
+    }
+  }
 
-/* =========================
-   LOADING
-   ========================= */
+  body, html {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    background: #f0f0f0;
+    font-family: "Sarabun", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+  }
 
-#loader {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  z-index: 9999;
-  opacity: 1;
-  visibility: visible;
-}
-
-#loader.fadeout {
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-  transition: opacity 0.8s ease;
-}
-
-.bar-loader {
-  width: 120px;
-  max-width: 60%;
-  height: 14px;
-  background: #ececec;
-  border-radius: 7px;
-  overflow: hidden;
-  position: relative;
-}
-
-.bar-inner {
-  width: 40px;
-  height: 100%;
-  background: #4285f4;
-  border-radius: 7px;
-  position: absolute;
-  left: -40px;
-  animation: barmove 1.5s infinite linear;
-}
-
-@keyframes barmove {
-  0% {
+  /* ---------- Loader ---------- */
+  #loader {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    z-index: 999;
+    transition: opacity 1s ease;
+    opacity: 1;
+  }
+  #loader.fadeout { opacity: 0; pointer-events: none; }
+  .loader-logo { width: 88px; height: 88px; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  .loader-title { margin-top: -10px; font-size: 17px; font-weight: 600; color: #1f2937; }
+  .bar-loader {
+    width: 120px;
+    max-width: 60%;
+    height: 14px;
+    background: #ececec;
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-inner {
+    width: 40px;
+    height: 100%;
+    background: #4285f4;
+    border-radius: 7px;
+    position: absolute;
     left: -40px;
+    animation: barmove 1.5s infinite linear;
+  }
+  @keyframes barmove {
+    0%   { left: -40px; }
+    100% { left: 120px; }
   }
 
-  100% {
-    left: 120px;
+  /* ---------- Iframe ---------- */
+  #content-iframe {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(.4,0,.2,1);
+    z-index: 1;
   }
-}
+  #content-iframe.visible { opacity: 1; }
 
-/* =========================
-   WEB APP
-   ========================= */
+  /* ---------- Install UI ---------- */
+  .pwa-hidden { display: none !important; }
 
-#content-iframe {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.6s ease;
-  z-index: 1;
-}
+  #pwa-banner {
+    position: fixed;
+    left: 12px; right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.22);
+    z-index: 1000;
+    animation: pwa-up .35s ease-out;
+  }
+  @keyframes pwa-up {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  #pwa-banner img { width: 46px; height: 46px; border-radius: 11px; flex: none; }
+  #pwa-banner .txt { flex: 1; min-width: 0; line-height: 1.25; }
+  #pwa-banner .txt b { display: block; font-size: 15px; }
+  #pwa-banner .txt span { font-size: 12.5px; color: var(--muted); }
 
-#content-iframe.visible {
-  opacity: 1;
-  visibility: visible;
-}
+  .pwa-btn {
+    border: 0; cursor: pointer; font: inherit; font-weight: 600;
+    background: var(--brand); color: #fff;
+    padding: 9px 16px; border-radius: 10px; font-size: 14px;
+    white-space: nowrap;
+  }
+  .pwa-btn:active { transform: scale(.97); }
+  .pwa-close {
+    border: 0; background: transparent; color: var(--muted);
+    font-size: 22px; line-height: 1; cursor: pointer; padding: 4px 6px;
+  }
 
-/* =========================
-   INSTALL BOX
-   ========================= */
+  #pwa-fab {
+    position: fixed;
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--brand); color: #fff;
+    font: inherit; font-size: 14px; font-weight: 600;
+    box-shadow: 0 6px 18px rgba(15,118,110,.45);
+    z-index: 1000;
+    animation: pwa-up .35s ease-out;
+  }
 
-#installBox {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(100% - 40px);
-  max-width: 400px;
-  box-sizing: border-box;
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 24px 20px 20px;
-  box-shadow: 0 8px 35px rgba(0,0,0,0.20);
-  z-index: 10000;
-  text-align: center;
-  display: none;
-}
+  #install-guide {
+    position: fixed; inset: 0;
+    display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(0,0,0,.5);
+    z-index: 1100;
+  }
+  #install-guide .sheet {
+    width: 100%; max-width: 460px;
+    background: var(--card); color: var(--text);
+    border-radius: 20px 20px 0 0;
+    padding: 22px 22px calc(22px + env(safe-area-inset-bottom));
+    animation: pwa-up .3s ease-out;
+  }
+  #install-guide h3 { margin: 0 0 6px; font-size: 18px; }
+  #install-guide p  { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+  #install-guide ol { margin: 0 0 16px; padding-left: 20px; font-size: 15px; line-height: 1.9; }
+  #install-guide .pwa-btn { width: 100%; }
 
-#installIcon {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
-  object-fit: cover;
-  margin-bottom: 12px;
-}
-
-#installBox h3 {
-  margin: 0 0 8px;
-  font-size: 20px;
-  color: #222222;
-}
-
-#installBox p {
-  margin: 0 0 18px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: #666666;
-}
-
-#installBtn {
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  padding: 13px;
-  background: #0d6efd;
-  color: #ffffff;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-#closeInstall {
-  width: 100%;
-  margin-top: 9px;
-  border: none;
-  background: transparent;
-  color: #777777;
-  font-size: 14px;
-  padding: 8px;
-  cursor: pointer;
-}
-
-#iosGuide {
-  display: none;
-  font-size: 14px;
-  line-height: 1.8;
-  color: #555555;
-  margin-bottom: 10px;
-}
-
-#iosGuide b {
-  color: #222222;
-}
-
-#iosShare {
-  display: inline-block;
-  font-size: 22px;
-  vertical-align: middle;
-  margin: 0 4px;
-}
+  #offline-toast {
+    position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%;
+    transform: translateX(-50%);
+    background: #b91c1c; color: #fff;
+    padding: 8px 16px; border-radius: 999px;
+    font-size: 13px; z-index: 1200;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
 </style>
-
 </head>
-
 <body>
 
-<!-- =========================
-     LOADING
-     ========================= -->
-
 <div id="loader">
+  <img class="loader-logo" src="icon-192.png" alt="จองห้องประชุม">
+  <div class="loader-title">จองห้องประชุม</div>
   <div class="bar-loader">
     <div class="bar-inner"></div>
   </div>
 </div>
 
-<!-- =========================
-     INSTALL GUIDE
-     ========================= -->
-
-<div id="installBox">
-
-<img
- id="installIcon"
- src="./icon-512.png"
- alt="TIS Meet">
-
-  <h3>ติดตั้งแอป TIS Meet</h3>
-
-  <p>
-    กด <b>Install</b> เพื่อติดตั้งแอปไว้บนเครื่อง
-    เพื่อความสะดวกในการเข้าใช้งาน
-  </p>
-
-  <div id="iosGuide">
-
-    สำหรับ iPhone / iPad<br>
-
-    กดปุ่ม
-    <span id="iosShare">□</span>
-    <b>แชร์</b>
-    แล้วเลือก<br>
-
-    <b>เพิ่มไปยังหน้าจอโฮม</b>
-
-  </div>
-
-  <button id="installBtn">
-    Install
-  </button>
-
-  <button id="closeInstall">
-    ใช้งานผ่านเบราว์เซอร์
-  </button>
-
-</div>
-
-<!-- =========================
-     GOOGLE APPS SCRIPT WEB APP
-     ========================= -->
-
-<iframe
-  id="content-iframe"
-  src="https://script.google.com/macros/s/AKfycbxogYrC7Fkh4fMLf7Ecbaki6Jk5AHikJTrtZGlDHSV9ylff62BoSy6waHBAA1YHgsfg/exec">
+<iframe id="content-iframe"
+        title="จองห้องประชุม"
+        src="https://script.google.com/macros/s/AKfycbxogYrC7Fkh4fMLf7Ecbaki6Jk5AHikJTrtZGlDHSV9ylff62BoSy6waHBAA1YHgsfg/exec">
 </iframe>
 
+<!-- ===== Install banner / FAB / Guide ===== -->
+<div id="pwa-banner" class="pwa-hidden" role="dialog" aria-label="ติดตั้งแอป">
+  <img src="icon-192.png" alt="">
+  <div class="txt">
+    <b>ติดตั้งแอปจองห้องประชุม</b>
+    <span>จองห้องได้เร็วขึ้น เปิดจากหน้าจอหลักได้ทันที</span>
+  </div>
+  <button type="button" class="pwa-btn" id="pwa-install-btn">ติดตั้ง</button>
+  <button type="button" class="pwa-close" id="pwa-dismiss-btn" aria-label="ปิด">&times;</button>
+</div>
+
+<button type="button" id="pwa-fab" class="pwa-hidden" aria-label="ติดตั้งแอป">📲 ติดตั้งแอป</button>
+
+<div id="install-guide" class="pwa-hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+  <div class="sheet">
+    <h3 id="guide-title"></h3>
+    <p id="guide-sub"></p>
+    <ol id="guide-steps"></ol>
+    <button type="button" class="pwa-btn" id="guide-close-btn">เข้าใจแล้ว</button>
+  </div>
+</div>
+
 <script>
-
-/* =========================
-   ELEMENTS
-   ========================= */
-
+// ==============================
+// 🖼️ Loader → Iframe (เหมือนเดิม)
+// ==============================
 const loader = document.getElementById('loader');
 const iframe = document.getElementById('content-iframe');
 
-const installBox = document.getElementById('installBox');
-const installBtn = document.getElementById('installBtn');
-const closeInstall = document.getElementById('closeInstall');
-const iosGuide = document.getElementById('iosGuide');
+setTimeout(() => {
+  loader.classList.add('fadeout');
+  setTimeout(() => {
+    loader.style.display = 'none';
+    iframe.classList.add('visible');
+    uiReady = true;
+    refreshInstallUI();
+  }, 1000);
+}, 1500);
+
+// ==============================
+// 📲 PWA: Service Worker
+// ==============================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .catch((err) => console.warn('SW register failed:', err));
+  });
+}
+
+// ==============================
+// 📲 PWA: ปุ่มติดตั้งแอป
+// ==============================
+const DISMISS_KEY = 'meeting-room:pwa-dismissed-at';
+const DISMISS_DAYS = 7;
+
+const el = {
+  banner:   document.getElementById('pwa-banner'),
+  fab:      document.getElementById('pwa-fab'),
+  guide:    document.getElementById('install-guide'),
+  gTitle:   document.getElementById('guide-title'),
+  gSub:     document.getElementById('guide-sub'),
+  gSteps:   document.getElementById('guide-steps'),
+  gClose:   document.getElementById('guide-close-btn'),
+  install:  document.getElementById('pwa-install-btn'),
+  dismiss:  document.getElementById('pwa-dismiss-btn')
+};
+
+const store = {
+  get(k)    { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } }
+};
 
 let deferredPrompt = null;
+let uiReady = false;      // true เมื่อ loader หายแล้ว
+let installed = false;
 
+const UA = navigator.userAgent;
 
-/* =========================
-   ตรวจสอบว่าเปิดเป็น App แล้วหรือไม่
-   ========================= */
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.matchMedia('(display-mode: fullscreen)').matches ||
+  window.navigator.standalone === true;
 
-function isInstalledApp() {
+const isIOS = () =>
+  /iphone|ipad|ipod/i.test(UA) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         window.navigator.standalone === true;
+// เบราว์เซอร์ในแอป (LINE / Facebook / Instagram / WebView) ติดตั้ง PWA ไม่ได้
+const isInAppBrowser = () => /Line\/|FBAN|FBAV|Instagram|MicroMessenger|; wv\)/i.test(UA);
 
-}
+const isAndroid = () => /android/i.test(UA);
 
+const bannerDismissedRecently = () => {
+  const t = Number(store.get(DISMISS_KEY));
+  return t && (Date.now() - t) < DISMISS_DAYS * 86400000;
+};
 
-/* =========================
-   ตรวจสอบ iPhone / iPad
-   ========================= */
+const show = (node, on) => node.classList.toggle('pwa-hidden', !on);
 
-function isIOS() {
-
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-         (navigator.platform === 'MacIntel' &&
-          navigator.maxTouchPoints > 1);
-
-}
-
-
-/* =========================
-   Android / Browser
-   ========================= */
-
-window.addEventListener('beforeinstallprompt', function(e) {
-
-  e.preventDefault();
-
-  deferredPrompt = e;
-
-});
-
-
-/* =========================
-   แสดงคำแนะนำติดตั้ง
-   ========================= */
-
-window.addEventListener('load', function() {
-
-  if (isInstalledApp()) {
-
-    installBox.style.display = 'none';
-
+// แสดงแบนเนอร์เสมอ (ยกเว้นติดตั้งแล้ว / เปิดในโหมดแอปอยู่)
+function refreshInstallUI() {
+  const visible = uiReady && !installed && !isStandalone();
+  if (!visible) {
+    show(el.banner, false);
+    show(el.fab, false);
     return;
-
   }
+  const bannerVisible = !bannerDismissedRecently();
+  show(el.banner, bannerVisible);
+  show(el.fab, !bannerVisible);
+}
 
+// คู่มือติดตั้งตามแพลตฟอร์ม (ใช้เมื่อเบราว์เซอร์ไม่ส่ง install prompt มาให้)
+function getGuide() {
+  if (isInAppBrowser()) {
+    return {
+      title: 'เปิดด้วยเบราว์เซอร์ก่อนติดตั้ง',
+      sub: 'เบราว์เซอร์ในแอป (เช่น LINE) ไม่รองรับการติดตั้ง',
+      steps: [
+        'แตะเมนู <b>⋮</b> หรือปุ่ม <b>แชร์</b> ที่มุมหน้าจอ',
+        'เลือก <b>เปิดในเบราว์เซอร์</b> (Chrome / Safari)',
+        'กดปุ่ม <b>ติดตั้ง</b> อีกครั้งในเบราว์เซอร์'
+      ]
+    };
+  }
   if (isIOS()) {
-
-    installBox.style.display = 'block';
-
-    installBtn.style.display = 'none';
-
-    iosGuide.style.display = 'block';
-
-    return;
-
+    return {
+      title: 'ติดตั้งแอปจองห้องประชุมบน iPhone / iPad',
+      sub: 'ทำตามขั้นตอนต่อไปนี้ในเบราว์เซอร์ Safari',
+      steps: [
+        'แตะปุ่ม <b>แชร์</b> (ไอคอนสี่เหลี่ยมมีลูกศรชี้ขึ้น)',
+        'เลื่อนลงแล้วเลือก <b>เพิ่มไปยังหน้าจอโฮม</b>',
+        'แตะ <b>เพิ่ม</b> ที่มุมขวาบน'
+      ]
+    };
   }
+  if (isAndroid()) {
+    return {
+      title: 'ติดตั้งแอปจองห้องประชุมบน Android',
+      sub: 'ทำตามขั้นตอนต่อไปนี้ในเบราว์เซอร์ Chrome',
+      steps: [
+        'แตะเมนู <b>⋮</b> ที่มุมขวาบน',
+        'เลือก <b>ติดตั้งแอป</b> หรือ <b>เพิ่มลงในหน้าจอหลัก</b>',
+        'กด <b>ติดตั้ง</b> เพื่อยืนยัน'
+      ]
+    };
+  }
+  return {
+    title: 'ติดตั้งแอปจองห้องประชุมบนคอมพิวเตอร์',
+    sub: 'รองรับ Chrome และ Edge',
+    steps: [
+      'มองหาไอคอน <b>ติดตั้ง</b> ทางขวาสุดของช่องที่อยู่เว็บ',
+      'หรือเปิดเมนู <b>⋮</b> แล้วเลือก <b>ติดตั้งจองห้องประชุม</b>',
+      'กด <b>ติดตั้ง</b> เพื่อยืนยัน'
+    ]
+  };
+}
 
-  installBox.style.display = 'block';
+function openGuide() {
+  const g = getGuide();
+  el.gTitle.textContent = g.title;
+  el.gSub.textContent = g.sub;
+  el.gSteps.innerHTML = g.steps.map((s) => `<li>${s}</li>`).join(''); // ข้อความคงที่ในโค้ด ไม่รับค่าจากผู้ใช้
+  show(el.guide, true);
+}
 
+async function installApp() {
+  if (deferredPrompt) {
+    const promptEvent = deferredPrompt;
+    deferredPrompt = null;               // ใช้ได้ครั้งเดียว
+    try {
+      promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
+      if (outcome === 'dismissed') store.set(DISMISS_KEY, String(Date.now()));
+    } catch (err) {
+      console.warn('Install prompt error:', err);
+    }
+    refreshInstallUI();
+  } else {
+    openGuide();                          // ไม่มี prompt → แสดงวิธีติดตั้งด้วยตัวเอง
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();                    // เก็บไว้เรียกตอนผู้ใช้กดปุ่มเอง
+  deferredPrompt = e;
+  refreshInstallUI();
 });
 
-
-/* =========================
-   Android Install
-   ========================= */
-
-installBtn.addEventListener('click', async function() {
-
-  if (!deferredPrompt) {
-
-    alert(
-      'เปิดเมนูของเบราว์เซอร์ แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มไปยังหน้าจอหลัก"'
-    );
-
-    return;
-
-  }
-
-  deferredPrompt.prompt();
-
-  const result = await deferredPrompt.userChoice;
-
-  if (result.outcome === 'accepted') {
-
-    installBox.style.display = 'none';
-
-  }
-
+window.addEventListener('appinstalled', () => {
+  installed = true;
   deferredPrompt = null;
-
+  refreshInstallUI();
 });
 
+window.matchMedia('(display-mode: standalone)')
+  .addEventListener?.('change', refreshInstallUI);
 
-/* =========================
-   ปิดคำแนะนำ
-   ========================= */
-
-closeInstall.addEventListener('click', function() {
-
-  installBox.style.display = 'none';
-
+el.install.addEventListener('click', installApp);
+el.fab.addEventListener('click', installApp);
+el.dismiss.addEventListener('click', () => {
+  store.set(DISMISS_KEY, String(Date.now()));
+  refreshInstallUI();
 });
+el.gClose.addEventListener('click', () => show(el.guide, false));
+el.guide.addEventListener('click', (e) => { if (e.target === el.guide) show(el.guide, false); });
 
+// ==============================
+// 📶 แจ้งเตือนเมื่อออฟไลน์
+// ==============================
+let offlineToast = null;
+function updateOnlineStatus() {
+  if (!navigator.onLine && !offlineToast) {
+    offlineToast = document.createElement('div');
+    offlineToast.id = 'offline-toast';
+    offlineToast.textContent = 'ไม่มีการเชื่อมต่ออินเทอร์เน็ต';
+    document.body.appendChild(offlineToast);
+  } else if (navigator.onLine && offlineToast) {
+    offlineToast.remove();
+    offlineToast = null;
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
 
-/* =========================
-   ตรวจพบการติดตั้ง
-   ========================= */
+// ==============================
+// 🔒 ป้องกันปุ่มย้อนกลับ (Mobile Back)
+// ==============================
 
-window.addEventListener('appinstalled', function() {
-
-  installBox.style.display = 'none';
-
-});
-
-
-/* =========================
-   iframe โหลดเสร็จ
-   ========================= */
-
-iframe.addEventListener('load', function() {
-
-  loader.classList.add('fadeout');
-
-  iframe.classList.add('visible');
-
-  setTimeout(function() {
-
-    loader.style.display = 'none';
-
-  }, 800);
-
-});
-
-
-/* =========================
-   ป้องกันปุ่มย้อนกลับ
-   ========================= */
-
+// push state ครั้งแรก
 history.pushState(null, null, location.href);
 
-window.addEventListener('popstate', function() {
-
-  const confirmExit =
-    confirm('ต้องการออกจากหน้านี้หรือไม่ ?');
+window.addEventListener('popstate', function (event) {
+  const confirmExit = confirm('ต้องการออกจากหน้านี้หรือไม่ ?');
 
   if (confirmExit) {
-
+    // อนุญาตให้ย้อนกลับจริง
     history.back();
-
   } else {
-
+    // กันไม่ให้ย้อนกลับ
     history.pushState(null, null, location.href);
-
   }
-
 });
 
+// ==============================
+// 🔒 กัน reload / ปิด tab (เสริม)
+// ==============================
+window.addEventListener('beforeunload', function (e) {
+  e.preventDefault();
+  e.returnValue = '';
+});
 </script>
-
 </body>
 </html>

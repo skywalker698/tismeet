@@ -1,10 +1,9 @@
-
 /* Meeting Room Booking Service Worker
  * - แคชเฉพาะ "App Shell" (index, manifest, icons) ที่อยู่บน github.io
  * - ไม่แตะต้อง request ข้ามโดเมน (script.google.com) เพื่อไม่ให้ข้อมูลเงินเดือนถูกแคชค้าง
  * - เปลี่ยนเลข CACHE_VERSION ทุกครั้งที่แก้ไฟล์ใน SHELL เพื่อให้เครื่องผู้ใช้อัปเดต
  */
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `meeting-room-${CACHE_VERSION}`;
 const SHELL = [
   './',

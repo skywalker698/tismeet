@@ -100,7 +100,7 @@
   /* ---------- Install UI ---------- */
   .pwa-hidden { display: none !important; }
 
-  #pwa-banner {
+  #pwa-banner, #pwa-installed {
     position: fixed;
     left: 12px; right: 12px;
     bottom: calc(12px + env(safe-area-inset-bottom));
@@ -122,10 +122,10 @@
     from { transform: translateY(24px); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
-  #pwa-banner img { width: 46px; height: 46px; border-radius: 11px; flex: none; }
-  #pwa-banner .txt { flex: 1; min-width: 0; line-height: 1.25; }
-  #pwa-banner .txt b { display: block; font-size: 15px; }
-  #pwa-banner .txt span { font-size: 12.5px; color: var(--muted); }
+  #pwa-banner img, #pwa-installed img { width: 46px; height: 46px; border-radius: 11px; flex: none; }
+  #pwa-banner .txt, #pwa-installed .txt { flex: 1; min-width: 0; line-height: 1.25; }
+  #pwa-banner .txt b, #pwa-installed .txt b { display: block; font-size: 15px; }
+  #pwa-banner .txt span, #pwa-installed .txt span { font-size: 12.5px; color: var(--muted); }
 
   .pwa-btn {
     border: 0; cursor: pointer; font: inherit; font-weight: 600;
@@ -134,6 +134,7 @@
     white-space: nowrap;
   }
   .pwa-btn:active { transform: scale(.97); }
+  .pwa-btn.secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); margin-top: 8px; }
   .pwa-close {
     border: 0; background: transparent; color: var(--muted);
     font-size: 22px; line-height: 1; cursor: pointer; padding: 4px 6px;
@@ -207,6 +208,16 @@
   <button type="button" class="pwa-close" id="pwa-dismiss-btn" aria-label="ปิด">&times;</button>
 </div>
 
+<div id="pwa-installed" class="pwa-hidden" role="status">
+  <img src="icon-192.png" alt="">
+  <div class="txt">
+    <b>ติดตั้งแอปแล้ว</b>
+    <span>เปิดจากไอคอน “จองห้อง” บนหน้าจอหลักได้ทันที</span>
+  </div>
+  <button type="button" class="pwa-btn" id="pwa-open-btn">เปิดแอป</button>
+  <button type="button" class="pwa-close" id="pwa-installed-close" aria-label="ปิด">&times;</button>
+</div>
+
 <button type="button" id="pwa-fab" class="pwa-hidden" aria-label="ติดตั้งแอป">📲 ติดตั้งแอป</button>
 
 <div id="install-guide" class="pwa-hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
@@ -214,7 +225,8 @@
     <h3 id="guide-title"></h3>
     <p id="guide-sub"></p>
     <ol id="guide-steps"></ol>
-    <button type="button" class="pwa-btn" id="guide-close-btn">เข้าใจแล้ว</button>
+    <button type="button" class="pwa-btn pwa-hidden" id="guide-open-btn">เปิดแอป</button>
+    <button type="button" class="pwa-btn secondary" id="guide-close-btn">เข้าใจแล้ว</button>
   </div>
 </div>
 
@@ -250,6 +262,8 @@ if ('serviceWorker' in navigator) {
 // ==============================
 const DISMISS_KEY = 'meeting-room:pwa-dismissed-at';
 const DISMISS_DAYS = 7;
+const INSTALLED_KEY = 'meeting-room:installed';
+const START_URL = new URL('./?source=pwa', location.href).href;
 
 const el = {
   banner:   document.getElementById('pwa-banner'),
@@ -259,6 +273,10 @@ const el = {
   gSub:     document.getElementById('guide-sub'),
   gSteps:   document.getElementById('guide-steps'),
   gClose:   document.getElementById('guide-close-btn'),
+  gOpen:    document.getElementById('guide-open-btn'),
+  installedBar: document.getElementById('pwa-installed'),
+  openBtn:  document.getElementById('pwa-open-btn'),
+  installedClose: document.getElementById('pwa-installed-close'),
   install:  document.getElementById('pwa-install-btn'),
   dismiss:  document.getElementById('pwa-dismiss-btn')
 };
@@ -270,7 +288,8 @@ const store = {
 
 let deferredPrompt = null;
 let uiReady = false;      // true เมื่อ loader หายแล้ว
-let installed = false;
+let installed = store.get(INSTALLED_KEY) === '1';   // เคยติดตั้งแล้วหรือไม่
+let installedBarClosed = false;
 
 const UA = navigator.userAgent;
 
@@ -295,20 +314,39 @@ const bannerDismissedRecently = () => {
 
 const show = (node, on) => node.classList.toggle('pwa-hidden', !on);
 
-// แสดงแบนเนอร์เสมอ (ยกเว้นติดตั้งแล้ว / เปิดในโหมดแอปอยู่)
+// แสดงแบนเนอร์เสมอ (ยกเว้นเปิดในโหมดแอปอยู่) — ถ้าติดตั้งแล้วจะเปลี่ยนเป็นแถบ "เปิดแอป"
 function refreshInstallUI() {
-  const visible = uiReady && !installed && !isStandalone();
-  if (!visible) {
+  if (!uiReady || isStandalone()) {
     show(el.banner, false);
     show(el.fab, false);
+    show(el.installedBar, false);
     return;
   }
+  if (installed) {
+    show(el.banner, false);
+    show(el.fab, false);
+    show(el.installedBar, !installedBarClosed);
+    return;
+  }
+  show(el.installedBar, false);
   const bannerVisible = !bannerDismissedRecently();
   show(el.banner, bannerVisible);
   show(el.fab, !bannerVisible);
 }
 
 // คู่มือติดตั้งตามแพลตฟอร์ม (ใช้เมื่อเบราว์เซอร์ไม่ส่ง install prompt มาให้)
+function getSuccessGuide() {
+  return {
+    title: 'ติดตั้งสำเร็จ 🎉',
+    sub: 'แอปจองห้องประชุมพร้อมใช้งานแล้ว',
+    steps: isAndroid()
+      ? ['แตะ <b>เปิด</b> ในข้อความของ Chrome ที่ปรากฏด้านล่างจอ',
+         'หรือแตะไอคอน <b>จองห้อง</b> บนหน้าจอหลัก']
+      : ['แอปจะเปิดเป็นหน้าต่างใหม่ให้อัตโนมัติ',
+         'หรือเปิดไอคอน <b>จองห้อง</b> จากหน้าจอหลัก / เมนู Start']
+  };
+}
+
 function getGuide() {
   if (isInAppBrowser()) {
     return {
@@ -354,12 +392,30 @@ function getGuide() {
   };
 }
 
-function openGuide() {
-  const g = getGuide();
+function openGuide(mode) {
+  const success = mode === 'success';
+  const g = success ? getSuccessGuide() : getGuide();
+  show(el.gOpen, success);
   el.gTitle.textContent = g.title;
   el.gSub.textContent = g.sub;
   el.gSteps.innerHTML = g.steps.map((s) => `<li>${s}</li>`).join(''); // ข้อความคงที่ในโค้ด ไม่รับค่าจากผู้ใช้
   show(el.guide, true);
+}
+
+// บันทึกว่าติดตั้งแล้ว (เก็บใน localStorage ไว้ใช้ตอนเปิดผ่านเบราว์เซอร์ครั้งถัดไป)
+function markInstalled(announce) {
+  const wasInstalled = installed;
+  installed = true;
+  deferredPrompt = null;
+  store.set(INSTALLED_KEY, '1');
+  refreshInstallUI();
+  if (announce && !wasInstalled) openGuide('success');
+}
+
+// พยายามเปิดแอปที่ติดตั้งแล้ว (เบราว์เซอร์บางตัวไม่อนุญาตให้เว็บสั่งเปิดแอปโดยตรง)
+function openInstalledApp() {
+  const w = window.open(START_URL, '_blank');
+  if (!w) openGuide('success');
 }
 
 async function installApp() {
@@ -382,14 +438,25 @@ async function installApp() {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();                    // เก็บไว้เรียกตอนผู้ใช้กดปุ่มเอง
   deferredPrompt = e;
+  // เบราว์เซอร์ส่งอีเวนต์นี้เฉพาะตอนที่ "ยังไม่ได้ติดตั้ง" → ล้างสถานะเก่า (เช่น ผู้ใช้ถอนการติดตั้งไปแล้ว)
+  if (installed) { installed = false; store.set(INSTALLED_KEY, '0'); }
   refreshInstallUI();
 });
 
-window.addEventListener('appinstalled', () => {
-  installed = true;
-  deferredPrompt = null;
-  refreshInstallUI();
-});
+window.addEventListener('appinstalled', () => markInstalled(true));
+
+// ตรวจว่าเครื่องนี้ติดตั้งแอปไว้แล้วหรือไม่ (Chrome/Edge) — อ้างอิงจาก related_applications ใน manifest
+if (navigator.getInstalledRelatedApps) {
+  navigator.getInstalledRelatedApps()
+    .then((apps) => {
+      if (apps && apps.length && !installed) {
+        installed = true;
+        store.set(INSTALLED_KEY, '1');
+        refreshInstallUI();
+      }
+    })
+    .catch(() => { /* ไม่รองรับ / ถูกปฏิเสธ → ข้าม */ });
+}
 
 window.matchMedia('(display-mode: standalone)')
   .addEventListener?.('change', refreshInstallUI);
@@ -401,6 +468,9 @@ el.dismiss.addEventListener('click', () => {
   refreshInstallUI();
 });
 el.gClose.addEventListener('click', () => show(el.guide, false));
+el.gOpen.addEventListener('click', () => { show(el.guide, false); openInstalledApp(); });
+el.openBtn.addEventListener('click', openInstalledApp);
+el.installedClose.addEventListener('click', () => { installedBarClosed = true; refreshInstallUI(); });
 el.guide.addEventListener('click', (e) => { if (e.target === el.guide) show(el.guide, false); });
 
 // ==============================
